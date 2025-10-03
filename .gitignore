@@ -1,7 +1,8 @@
 .DS_Store
 scripts/extract_to_array.txt
 scripts/input.mp4
-scripts/ascii_frames
+scripts/ascii_frames_70px
+scripts/ascii_frames_420px
 scripts/frames
 scripts/old_ascii_frames
 scripts/old_frames

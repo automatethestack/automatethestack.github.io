@@ -1,0 +1,122 @@
+html {
+  margin: 0;
+  font-variant-ligatures: none;
+  background-color: #0a0a0a;
+  color: #E5E7EB;
+  font-family: "Departure", monospace;
+  font-size: 22px;
+  line-height: 22px;
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+pre {
+  display: block;
+  margin: 0 auto;
+  width: 70ch;
+  position: relative;
+  z-index: 0;
+  font-variant-ligatures: none;
+  background-color: #0a0a0a;
+  color: #E5E7EB;
+  font-family: "Departure", monospace;
+  font-size: 11px;
+  line-height: 1em;
+  box-sizing: border-box;
+  padding: 0;
+  overflow: hidden;
+  min-width: 506px;
+  transform-origin: top center;
+}
+
+/* sm ≥ 640px → 22px */
+@media (min-width: 759px) {
+  pre { font-size: 16.5px; }
+}
+
+/* lg ≥ 1024px → 22px */
+@media (min-width: 1012px) {
+  pre { font-size: 22px; }
+}
+
+/* xl ≥ 1200px → 22px */
+@media (min-width: 1518px) {
+  pre { font-size: 33px; }
+}
+
+@font-face {
+  font-family: "Departure";
+  src: url("./public/departure.woff") format("woff");
+}
+#animation-content {
+  opacity: 0;
+  transition: opacity 0.35s ease-in;
+}
+#animation-content.loaded {
+  color: #E5E7EB;
+  opacity: 1;
+}
+a {
+  color: #E5E7EB;
+  text-decoration: none;
+  transition: color 0.7s ease-out, opacity 0.7s ease-out;
+}
+a:hover {
+  color: #FFFFFF;
+  opacity: 0.9;
+  transition: color 0.7s ease-out, opacity 0.7s ease-out;
+}
+#brand:hover {
+  color: #FFFFFF;
+  opacity: 0.9;
+  transition: color 0.7s ease-out, opacity 0.7s ease-out;
+}
+
+/* Blink animation for bracket and arrow accents */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+#brand:hover .brand-bracket {
+  animation: blink 1s steps(1, end) infinite;
+}
+a[href^="mailto:"]:hover .mail-arrow {
+  animation: blink 1s steps(1, end) infinite;
+}
+
+/* Subtle visual snow / static overlay */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.105;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 140px 140px;
+  animation: noiseShift 0.35s steps(7, end) infinite;
+}
+
+@keyframes noiseShift {
+  0%   { background-position:   0px   0px; }
+  12%  { background-position: -20px  30px; }
+  25%  { background-position: -60px  80px; }
+  37%  { background-position:  40px -50px; }
+  50%  { background-position:  80px -10px; }
+  62%  { background-position: -30px  60px; }
+  75%  { background-position:  50px  20px; }
+  87%  { background-position: -70px -40px; }
+  100% { background-position:   0px   0px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noise-overlay { animation: none; opacity: 0.07; }
+}
+
+
