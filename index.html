@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+   <head>
+    <style>
+      body { 
+        background-color: #0a0a0a; 
+        color: #fafafa;
+        padding-left: 3ch;
+        /* Uncomment the following to enable horizontal centering of pre content: */
+        /* display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh; */
+      }
+      pre {
+        font-family: "Departure", monospace;
+        font-size: 22px;
+        line-height: 22px;
+        width: 42ch;
+        white-space: pre;
+        letter-spacing: 0px;
+        font-variant-ligatures: none;
+        /* Alternative centering method using flexbox (requires body flexbox enabled above): */
+        /* No additional styles needed - body flex container will center this element
+        /* Alternative centering method using margin auto (simpler, but less flexible): */
+        margin: 0 auto;
+      }
+      @font-face {
+        font-family: "Departure";
+        src: url("./public/departure.woff") format("woff");
+      }
+      #animation-content {
+        opacity: 0;
+        transition: opacity 0.3s ease-in;
+      }
+      #animation-content.loaded {
+        opacity: 1;
+      }
+      @media (max-width: 420px) {
+        pre { font-size: 11px; line-height: 11px; }
+      }
+    </style>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>automatethestack.com</title>
+   </head>
+   <body>
+<pre>
+----------------------------------------------------------------------
+|     automate the stack   |   contact • info@automatethestack.com   |
+----------------------------------------------------------------------
+<span id="animation-content">LOADING</span>
+----------------------------------------------------------------------
+|        copyright © 2025        |        all rights reserved        |
+----------------------------------------------------------------------
+</pre>
+
+<script>
+// Animation Manager - adapted from Ghostty's implementation
+class AnimationManager {
+  constructor(callback, fps = 10) {
+    this._animation = null;
+    this.callback = callback;
+    this.lastFrame = -1;
+    this.frameTime = 1000 / fps; // FPS CONTROL: Change fps parameter to adjust animation speed
+  }
+
+  // FPS CONTROL: Call this method to dynamically change FPS after initialization
+  // Example: animationManager.updateFPS(20) for 20 FPS
+  updateFPS(fps) {
+    this.frameTime = 1000 / fps;
+  }
+
+  start() {
+    if (this._animation != null) return;
+    this._animation = requestAnimationFrame(this.update.bind(this));
+  }
+
+  pause() {
+    if (this._animation == null) return;
+    this.lastFrame = -1;
+    cancelAnimationFrame(this._animation);
+    this._animation = null;
+  }
+
+  update(time) {
+    const { lastFrame } = this;
+    let delta = time - lastFrame;
+    
+    if (this.lastFrame === -1) {
+      this.lastFrame = time;
+    } else {
+      while (delta >= this.frameTime) {
+        this.callback();
+        delta -= this.frameTime;
+        this.lastFrame += this.frameTime;
+      }
+    }
+    
+    this._animation = requestAnimationFrame(this.update.bind(this));
+  }
+}
+
+// Main animation logic
+(async function initAnimation() {
+  const animationContent = document.getElementById('animation-content');
+  let frames = [];
+  let currentFrame = 0;
+  let animationManager = null;
+
+  try {
+    // Fetch frames-1.json
+    const response = await fetch('./public/frames-1.json');
+    if (!response.ok) {
+      throw new Error(`Failed to load frames: ${response.status}`);
+    }
+    
+    frames = await response.json();
+    console.log(`Loaded ${frames.length} animation frames`);
+
+    // Initialize animation manager
+    // FPS CONTROL: Change the second parameter (currently 10) to adjust FPS
+    // Examples: 5 = slower (5 FPS), 20 = faster (20 FPS), 30 = smooth (30 FPS)
+    animationManager = new AnimationManager(() => {
+      currentFrame = (currentFrame + 1) % frames.length;
+      animationContent.textContent = frames[currentFrame].join('\n');
+    }, 10); // 10 FPS - CHANGE THIS NUMBER to modify animation speed
+
+    // Set initial frame
+    animationContent.textContent = frames[0].join('\n');
+    animationContent.classList.add('loaded');
+
+    // Start animation if page is visible
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reducedMotion) {
+      animationManager.start(); // Always start animation regardless of visibility
+    }
+
+    // Note: Removed focus/blur and visibilitychange event listeners to allow
+    // animation to continue running even when window is not active.
+    // This increases CPU usage but ensures continuous animation.
+    // To re-enable performance optimization (pause when inactive), uncomment:
+    
+    // window.addEventListener('focus', () => animationManager.start());
+    // window.addEventListener('blur', () => animationManager.pause());
+    // document.addEventListener('visibilitychange', () => {
+    //   if (document.visibilityState === 'visible') {
+    //     animationManager.start();
+    //   } else {
+    //     animationManager.pause();
+    //   }
+    // });
+
+  } catch (error) {
+    console.error('Animation initialization failed:', error);
+    animationContent.textContent = 'Failed to load animation. Please refresh the page.';
+  }
+})();
+</script>
+   </body>
+</html>

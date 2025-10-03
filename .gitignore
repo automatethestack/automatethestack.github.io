@@ -1,5 +1,7 @@
 .DS_Store
-/website/
-frame_generation_pipeline/ascii_frames
-frame_generation_pipeline/frames
-frame_generation_pipeline/input.mp4
+scripts/extract_to_array.txt
+scripts/input.mp4
+scripts/ascii_frames
+scripts/frames
+scripts/old_ascii_frames
+scripts/old_frames
