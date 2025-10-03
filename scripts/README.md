@@ -167,7 +167,3 @@ scripts/
 ## Attribution
 
 Pipeline methodology adapted from: `https://transloadit.com/devtips/create-ascii-art-from-videos-with-lua-and-ffmpeg/`
-
----
-
-Back to web one‑pager and deployment: see `../README.md`.
