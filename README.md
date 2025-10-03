@@ -64,6 +64,9 @@ Use the provided shell script to process all frames automatically:
 
 ```bash
 ./create_ascii_art.sh
+
+# Wild charset, web-width (420 columns) variant
+./scripts/create_ascii_art_wild.sh
 ```
 
 **What it does:**
@@ -128,28 +131,16 @@ Create an MP4 video from ASCII art frames:
 
 ## Web Frontend Integration
 
-The web frontend displays ASCII animation using `index.html` and `server.js`.
+Single-page app `index.html` displays the ASCII animation.
 
-### index.html
-
-Single-page application with inline animation logic:
-
-**Features:**
-- Loads `frames.json` on page load
-- Uses `requestAnimationFrame` for smooth playback
-- Default 10 FPS (configurable)
-- Respects `prefers-reduced-motion` user preference
-- Continuous playback even when window is inactive
-- Fade-in effect when frames load
-
-**FPS Control:**
-To modify animation speed, change the FPS parameter in two locations:
+### FPS Control
+To modify animation speed, change the FPS parameter in two places:
 
 ```javascript
-// Line 66: AnimationManager constructor
+// AnimationManager constructor
 this.frameTime = 1000 / fps; // FPS CONTROL: Change fps parameter
 
-// Line 128: AnimationManager initialization
+// AnimationManager initialization
 animationManager = new AnimationManager(() => {
   // animation logic
 }, 10); // 10 FPS - CHANGE THIS NUMBER to modify speed
@@ -160,16 +151,16 @@ Examples:
 - `20` - Faster (20 FPS)
 - `30` - Smooth (30 FPS)
 
-**Centering Content:**
-The current layout uses left padding. To enable horizontal centering, uncomment the flexbox styles in the `<style>` section:
+We also add a subtle FPS jitter: every 4–8 seconds the FPS varies by ±2 (bounded to 5–30 FPS) for a lively feel. Remove this block in `index.html` if you prefer constant FPS.
+
+### Centering Content
+The page uses a wrapper to center the ASCII block horizontally. Wrap the `<pre>` with:
 
 ```css
-body { 
-  /* Uncomment to enable horizontal centering: */
+.center-wrap {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
+  width: 100%;
 }
 ```
 
@@ -180,34 +171,43 @@ pre {
 }
 ```
 
-### server.js
+Typography note: Using the `Departure` font, we recommend font-sizes in multiples of 11px (e.g., 11, 22, 33) for harmonious line metrics.
 
-Development server for local testing with proper static file serving:
+### Dev server (local only)
 
-**Purpose:**
-- Bun's `--hot` mode on `index.html` serves HTML for all routes
-- This breaks JSON file loading (returns HTML instead of JSON)
-- `server.js` properly serves static files with correct MIME types
+For local development, use a tiny Bun server. It is not needed in production (GitHub Pages serves static files directly).
 
-**Usage:**
+Production note: Do not deploy this server. It's only for local testing.
+
+File: `scripts/server.local.js`
+
+Usage:
 ```bash
-bun --hot server.js
+# start
+yarn bun --hot scripts/server.local.js || bun --hot scripts/server.local.js
+
+# stop (macOS/Linux)
+pkill -f "bun --hot scripts/server.local.js" || true
 ```
 
-Server runs at `http://localhost:3000` and serves:
-- `/` → `index.html`
-- `/frames.json` → JSON file with correct Content-Type
-- `/departure.woff` → Font file
-- All other static assets
+Code:
+```javascript
+import { file } from "bun";
 
-**Implementation:**
-- Built on Bun's native HTTP server
-- Async file existence checking
-- 404 for missing files
-- Hot module reloading enabled
+const server = Bun.serve({
+  port: 3000,
+  async fetch(req) {
+    const url = new URL(req.url);
+    let path = url.pathname;
+    if (path === "/") path = "/index.html";
+    const f = file(`.${path}`);
+    if (await f.exists()) return new Response(f);
+    return new Response("Not Found", { status: 404 });
+  },
+});
 
-**Production Note:**
-For production deployment (GitHub Pages, Netlify, etc.), this server is not needed. Static hosts will serve files correctly. This is only for local development with Bun.
+console.log(`Dev server running at http://localhost:${server.port}`);
+```
 
 ## File Structure
 
@@ -216,11 +216,12 @@ For production deployment (GitHub Pages, Netlify, etc.), this server is not need
 ├── index.html                   # Web frontend (single page)
 ├── frames.json                  # Animation data (generated)
 ├── departure.woff              # Custom font
-├── server.js                   # Development server
+├── scripts/server.local.js     # Local development server (not for prod)
 ├── scripts/
 │   ├── ascii_numerical.lua     # ASCII converter (10 chars)
 │   ├── ascii_wild.lua          # ASCII converter (427 chars)
 │   ├── create_ascii_art.sh     # Batch text generation
+│   ├── create_ascii_art_wild.sh# Wild charset, width=420 batch script
 │   ├── create_ascii_video.sh   # Full video pipeline
 │   ├── create_json_ascii.js    # JSON converter for web
 │   ├── extract_to_array.txt    # Character set for ascii_wild.lua
@@ -261,9 +262,12 @@ node create_json_ascii.js
 
 # 4. Start dev server
 cd ..
-bun --hot server.js
+bun --hot scripts/server.local.js
 
 # 5. Open http://localhost:3000
+
+# Stop the dev server later
+pkill -f "bun --hot scripts/server.local.js" || true
 ```
 
 ### For Video Output:
@@ -308,7 +312,7 @@ Deployment configured in `.github/workflows/pages.yml`:
 3. Push to `main` branch
 4. Site deploys automatically
 
-**Note:** GitHub Pages serves static files correctly without `server.js`. The development server is only needed for local testing with Bun's hot-reload.
+**Note:** GitHub Pages serves static files correctly without the dev server. The development server is only needed for local testing with Bun's hot-reload.
 
 ## Dependencies
 

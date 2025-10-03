@@ -6,24 +6,15 @@
         background-color: #0a0a0a; 
         color: #fafafa;
         padding-left: 3ch;
-        /* Uncomment the following to enable horizontal centering of pre content: */
-        /* display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        min-height: 100vh; */
       }
       pre {
         font-family: "Departure", monospace;
         font-size: 22px;
         line-height: 22px;
-        width: 42ch;
+        width: 22ch;
         white-space: pre;
         letter-spacing: 0px;
         font-variant-ligatures: none;
-        /* Alternative centering method using flexbox (requires body flexbox enabled above): */
-        /* No additional styles needed - body flex container will center this element
-        /* Alternative centering method using margin auto (simpler, but less flexible): */
-        margin: 0 auto;
       }
       @font-face {
         font-family: "Departure";
@@ -36,6 +27,10 @@
       #animation-content.loaded {
         opacity: 1;
       }
+      a {
+        color: #fafafa;
+        text-decoration: none;
+      }
       @media (max-width: 420px) {
         pre { font-size: 11px; line-height: 11px; }
       }
@@ -44,19 +39,26 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>automatethestack.com</title>
    </head>
-   <body>
+      <body>
+
+<!-- new animation goes here -->
 <pre>
+<span id="animation-content">LOADING</span>
+</pre>
+
+<!-- 70 char version stays commented out -->
+<!-- <pre>
 ----------------------------------------------------------------------
-|     automate the stack   |   contact • info@automatethestack.com   |
+|     automate the stack   |   contact • <a href="mailto:info@automatethestack.com">info@automatethestack.com</a>   |
 ----------------------------------------------------------------------
 <span id="animation-content">LOADING</span>
 ----------------------------------------------------------------------
 |        copyright © 2025        |        all rights reserved        |
 ----------------------------------------------------------------------
-</pre>
+</pre> -->
 
 <script>
-// Animation Manager - adapted from Ghostty's implementation
+// Animation Manager 
 class AnimationManager {
   constructor(callback, fps = 10) {
     this._animation = null;
@@ -109,8 +111,8 @@ class AnimationManager {
   let animationManager = null;
 
   try {
-    // Fetch frames-1.json
-    const response = await fetch('./public/frames-1.json');
+    // Fetch frames.json (either 70 char or 420 char version)
+    const response = await fetch('./public/frames-420-char.json');
     if (!response.ok) {
       throw new Error(`Failed to load frames: ${response.status}`);
     }
@@ -121,14 +123,28 @@ class AnimationManager {
     // Initialize animation manager
     // FPS CONTROL: Change the second parameter (currently 10) to adjust FPS
     // Examples: 5 = slower (5 FPS), 20 = faster (20 FPS), 30 = smooth (30 FPS)
+    const baseFPS = 10; // Base FPS for animation
     animationManager = new AnimationManager(() => {
       currentFrame = (currentFrame + 1) % frames.length;
       animationContent.textContent = frames[currentFrame].join('\n');
-    }, 10); // 10 FPS - CHANGE THIS NUMBER to modify animation speed
+    }, baseFPS); // CHANGE baseFPS to modify the default animation speed
 
     // Set initial frame
     animationContent.textContent = frames[0].join('\n');
     animationContent.classList.add('loaded');
+
+    // Lightweight, occasional FPS randomization for subtle variation
+    // Randomly varies FPS by ±2 every 4–8 seconds for a lively feel
+    function scheduleFpsJitter() {
+      const nextInMs = 4000 + Math.random() * 4000; // 4-8s
+      setTimeout(() => {
+        const jitter = (Math.random() * 4) - 2; // -2..+2
+        const newFps = Math.max(5, Math.min(30, baseFPS + jitter));
+        animationManager.updateFPS(newFps);
+        scheduleFpsJitter();
+      }, nextInMs);
+    }
+    scheduleFpsJitter();
 
     // Start animation if page is visible
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -136,7 +152,7 @@ class AnimationManager {
       animationManager.start(); // Always start animation regardless of visibility
     }
 
-    // Note: Removed focus/blur and visibilitychange event listeners to allow
+    // Removed focus/blur and visibilitychange event listeners to allow
     // animation to continue running even when window is not active.
     // This increases CPU usage but ensures continuous animation.
     // To re-enable performance optimization (pause when inactive), uncomment:
