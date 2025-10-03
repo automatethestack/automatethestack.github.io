@@ -45,84 +45,155 @@ class AnimationManager {
 
 // Main animation logic
 (async function initAnimation() {
-  const animationContent = document.getElementById('animation-content');
-  let frames = [];
-  let currentFrame = 0;
-  let animationManager = null;
+  const animationContentAbove490 = document.getElementById('animation-content-above-490');
+  const animationContentBelow490 = document.getElementById('animation-content-below-490');
 
-  try {
-    // Fetch frames.json (either 70 char or 420 char version)
-    const response = await fetch('./public/frames-70-char.json');
+  let framesAbove = [];
+  let framesBelow = [];
+  let currentFrameAbove = 0;
+  let currentFrameBelow = 0;
+  let managerAbove = null;
+  let managerBelow = null;
+  let baseFPS = 10; // Base FPS for animation
+
+  async function loadFrames(url) {
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to load frames: ${response.status}`);
     }
-    
-    frames = await response.json();
-    console.log(`Loaded ${frames.length} animation frames`);
+    return await response.json();
+  }
 
-    // Initialize animation manager
-    // FPS CONTROL: Change the second parameter (currently 10) to adjust FPS
-    // Examples: 5 = slower (5 FPS), 20 = faster (20 FPS), 30 = smooth (30 FPS)
-    let baseFPS = 10; // Base FPS for animation
-    animationManager = new AnimationManager(() => {
-      currentFrame = (currentFrame + 1) % frames.length;
-      animationContent.textContent = frames[currentFrame].join('\n');
-    }, baseFPS); // CHANGE baseFPS to modify the default animation speed
-
-    // Set initial frame
-    animationContent.textContent = frames[0].join('\n');
-    animationContent.classList.add('loaded');
-
-    // Lightweight, occasional FPS randomization for subtle variation
-    // Randomly varies FPS by ±2 every 4–8 seconds for a lively feel
-    function scheduleFpsJitter() {
-      const nextInMs = 4000 + Math.random() * 4000; // 4-8s
-      setTimeout(() => {
-        const jitter = (Math.random() * 4) - 2; // -2..+2
-        const newFps = Math.max(5, Math.min(30, baseFPS + jitter));
-        animationManager.updateFPS(newFps);
-        scheduleFpsJitter();
-      }, nextInMs);
+  function ensureManagers() {
+    if (!managerAbove) {
+      managerAbove = new AnimationManager(() => {
+        if (!framesAbove.length) return;
+        currentFrameAbove = (currentFrameAbove + 1) % framesAbove.length;
+        animationContentAbove490.textContent = framesAbove[currentFrameAbove].join('\n');
+      }, baseFPS);
     }
-    scheduleFpsJitter();
+    if (!managerBelow) {
+      managerBelow = new AnimationManager(() => {
+        if (!framesBelow.length) return;
+        currentFrameBelow = (currentFrameBelow + 1) % framesBelow.length;
+        animationContentBelow490.textContent = framesBelow[currentFrameBelow].join('\n');
+      }, baseFPS);
+    }
+  }
 
-    // Click-to-cycle FPS on title
-    const brandEl = document.getElementById('brand');
-    if (brandEl) {
-      const fpsOptions = [5, 10, 15, 20, 24, 30];
-      let fpsIndex = Math.max(0, fpsOptions.indexOf(baseFPS));
+  async function startAbove() {
+    if (!framesAbove.length) {
+      framesAbove = await loadFrames('./public/frames-70-char.json');
+    }
+    // Ensure the element is populated and visible every time we switch up
+    animationContentAbove490.textContent = framesAbove[0].join('\n');
+    animationContentAbove490.classList.add('loaded');
+    ensureManagers();
+    managerBelow && managerBelow.pause();
+    managerAbove.updateFPS(baseFPS);
+    managerAbove.start();
+  }
+
+  async function startBelow() {
+    // Build rotated frames on the fly from the same source frames
+    if (!framesAbove.length) {
+      framesAbove = await loadFrames('./public/frames-70-char.json');
+    }
+    if (!framesBelow.length) {
+      const rotate90Clockwise = (lines) => {
+        const height = lines.length;
+        const width = Math.max(0, ...lines.map((l) => l.length));
+        const grid = lines.map((l) => l.padEnd(width, ' '));
+        const rotated = [];
+        for (let x = 0; x < width; x++) {
+          let row = '';
+          for (let y = height - 1; y >= 0; y--) {
+            row += grid[y][x];
+          }
+          rotated.push(row);
+        }
+        // Trim entirely blank leading/trailing rows introduced by rotation/padding
+        const isBlank = (s) => s.trim().length === 0;
+        let start = 0;
+        while (start < rotated.length && isBlank(rotated[start])) start++;
+        let end = rotated.length - 1;
+        while (end >= start && isBlank(rotated[end])) end--;
+        return rotated.slice(start, end + 1);
+      };
+      framesBelow = framesAbove.map(rotate90Clockwise);
+    }
+    // Ensure the element is populated and visible every time we switch down
+    animationContentBelow490.textContent = framesBelow[0].join('\n');
+    animationContentBelow490.classList.add('loaded');
+    ensureManagers();
+    managerAbove && managerAbove.pause();
+    managerBelow.updateFPS(baseFPS);
+    managerBelow.start();
+  }
+
+  function scheduleFpsJitter() {
+    const nextInMs = 4000 + Math.random() * 4000; // 4-8s
+    setTimeout(() => {
+      const jitter = (Math.random() * 4) - 2; // -2..+2
+      const newFps = Math.max(5, Math.min(30, baseFPS + jitter));
+      baseFPS = newFps;
+      if (managerAbove) managerAbove.updateFPS(newFps);
+      if (managerBelow) managerBelow.updateFPS(newFps);
+      scheduleFpsJitter();
+    }, nextInMs);
+  }
+
+  try {
+    // FPS click-to-cycle on both brand links (duplicate IDs are handled via querySelectorAll)
+    const brandEls = document.querySelectorAll('#brand');
+    const fpsOptions = [5, 10, 15, 20, 24, 30];
+    let fpsIndex = Math.max(0, fpsOptions.indexOf(baseFPS));
+    brandEls.forEach((brandEl) => {
       brandEl.addEventListener('click', (e) => {
         e.preventDefault();
         fpsIndex = (fpsIndex + 1) % fpsOptions.length;
         baseFPS = fpsOptions[fpsIndex];
-        animationManager.updateFPS(baseFPS);
+        if (managerAbove) managerAbove.updateFPS(baseFPS);
+        if (managerBelow) managerBelow.updateFPS(baseFPS);
       });
-    }
+    });
 
-    // Start animation if page is visible
+    scheduleFpsJitter();
+
+    // Start the appropriate animation based on viewport, and switch on resize
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!reducedMotion) {
-      animationManager.start(); // Always start animation regardless of visibility
+    const mq = window.matchMedia('(max-width: 490px)');
+
+    async function applyBreakpoint(isBelow) {
+      if (reducedMotion) return;
+      try {
+        if (isBelow) {
+          await startBelow();
+        } else {
+          await startAbove();
+        }
+      } catch (err) {
+        console.error('Animation initialization failed:', err);
+        const target = isBelow ? animationContentBelow490 : animationContentAbove490;
+        if (target) target.textContent = 'Failed to load animation. Please refresh the page.';
+      }
     }
 
-    // Removed focus/blur and visibilitychange event listeners to allow
-    // animation to continue running even when window is not active.
-    // This increases CPU usage but ensures continuous animation.
-    // To re-enable performance optimization (pause when inactive), uncomment:
-    
-    // window.addEventListener('focus', () => animationManager.start());
-    // window.addEventListener('blur', () => animationManager.pause());
-    // document.addEventListener('visibilitychange', () => {
-    //   if (document.visibilityState === 'visible') {
-    //     animationManager.start();
-    //   } else {
-    //     animationManager.pause();
-    //   }
-    // });
+    // Initial start
+    await applyBreakpoint(mq.matches);
 
+    // React to viewport changes
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', (e) => applyBreakpoint(e.matches));
+    } else if (typeof mq.addListener === 'function') {
+      // Safari fallback
+      mq.addListener((e) => applyBreakpoint(e.matches));
+    }
   } catch (error) {
-    console.error('Animation initialization failed:', error);
-    animationContent.textContent = 'Failed to load animation. Please refresh the page.';
+    console.error('Animation setup failed:', error);
+    if (animationContentAbove490) {
+      animationContentAbove490.textContent = 'Failed to load animation. Please refresh the page.';
+    }
   }
 })();
 

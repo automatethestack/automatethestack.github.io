@@ -9,11 +9,13 @@ html {
   height: 100%;
   overflow: hidden;
 }
+
 body {
   margin: 0;
   height: 100%;
   overflow: hidden;
 }
+
 pre {
   display: block;
   margin: 0 auto;
@@ -29,21 +31,21 @@ pre {
   box-sizing: border-box;
   padding: 0;
   overflow: hidden;
-  min-width: 506px;
+  min-width: 490px;
   transform-origin: top center;
 }
 
-/* sm ≥ 640px → 22px */
+/* stage one */
 @media (min-width: 759px) {
   pre { font-size: 16.5px; }
 }
 
-/* lg ≥ 1024px → 22px */
+/* stage two */
 @media (min-width: 1012px) {
   pre { font-size: 22px; }
 }
 
-/* xl ≥ 1200px → 22px */
+/* stage three */
 @media (min-width: 1518px) {
   pre { font-size: 33px; }
 }
@@ -52,13 +54,51 @@ pre {
   font-family: "Departure";
   src: url("./public/departure.woff") format("woff");
 }
-#animation-content {
+#pre-content-above-490 {
+  display: block;
+}
+#pre-content-below-490 {
+  display: none;
+  margin: 0;
+}
+#animation-content-above-490 {
+  /* hidden when below 490px */
   opacity: 0;
   transition: opacity 0.35s ease-in;
 }
-#animation-content.loaded {
+#animation-content-above-490.loaded {
   color: #E5E7EB;
   opacity: 1;
+}
+#animation-content-below-490 {
+  /* hidden when above 490px */
+  display: none;
+  opacity: 0;
+  transition: opacity 0.35s ease-in;
+}
+#animation-content-below-490.loaded {
+  color: #E5E7EB;
+  opacity: 1;
+  max-width: 336px;
+}
+/* swap to the rotated layout when viewport is 490px wide or smaller */
+@media (max-width: 490px) {
+  #pre-content-above-490 { 
+    display: none; 
+  }
+  #pre-content-below-490 { 
+    display: block;
+    position: relative;
+    margin: 0 auto;              /* center horizontally */
+    width: max-content;          /* shrink to content width */
+    min-width: 0;                /* override global min-width from pre */
+  }
+  #animation-content-below-490 {
+    display: block;
+    font-size: 11px;       /* increase size of rotated JSON */
+    line-height: 1em;     
+    letter-spacing: 11.2px;     /* no extra spacing between characters */
+  }
 }
 a {
   color: #E5E7EB;
@@ -105,13 +145,13 @@ a[href^="mailto:"]:hover .mail-arrow {
 
 @keyframes noiseShift {
   0%   { background-position:   0px   0px; }
-  12%  { background-position: -20px  30px; }
-  25%  { background-position: -60px  80px; }
-  37%  { background-position:  40px -50px; }
-  50%  { background-position:  80px -10px; }
-  62%  { background-position: -30px  60px; }
-  75%  { background-position:  50px  20px; }
-  87%  { background-position: -70px -40px; }
+  12%  { background-position: -21px  35px; }
+  25%  { background-position: -63px  77px; }
+  37%  { background-position:  42px -56px; }
+  50%  { background-position:  84px -7px; }
+  62%  { background-position: -35px  63px; }
+  75%  { background-position:  56px  21px; }
+  87%  { background-position: -70px -42px; }
   100% { background-position:   0px   0px; }
 }
 
