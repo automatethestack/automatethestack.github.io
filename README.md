@@ -214,23 +214,25 @@ console.log(`Dev server running at http://localhost:${server.port}`);
 ```
 /
 ├── index.html                   # Web frontend (single page)
-├── frames.json                  # Animation data (generated)
-├── departure.woff              # Custom font
-├── scripts/server.local.js     # Local development server (not for prod)
+├── indexer.html                 # Alternate demo/static content
+├── public/
+│   ├── frames-70-char.json      # Animation data (web, 70ch width)
+│   ├── frames-420-char.json     # Animation data (web, 420ch width)
+│   └── departure.woff           # Custom font (Departure)
 ├── scripts/
-│   ├── ascii_numerical.lua     # ASCII converter (10 chars)
-│   ├── ascii_wild.lua          # ASCII converter (427 chars)
-│   ├── create_ascii_art.sh     # Batch text generation
-│   ├── create_ascii_art_wild.sh# Wild charset, width=420 batch script
-│   ├── create_ascii_video.sh   # Full video pipeline
-│   ├── create_json_ascii.js    # JSON converter for web
-│   ├── extract_to_array.txt    # Character set for ascii_wild.lua
-│   ├── input.mp4               # Source video
-│   ├── frames/                 # PNG frames (generated)
-│   └── ascii_frames/           # ASCII text files (generated)
+│   ├── server.local.js          # Local development server (not for prod)
+│   ├── create_json_ascii.js     # JSON converter for web
+│   ├── ascii_numerical.lua      # ASCII converter (10 chars)
+│   ├── ascii_wild.lua           # ASCII converter (427 chars)
+│   ├── create_ascii_art.sh      # Batch text generation
+│   ├── create_ascii_art_wild.sh # Wild charset, width=420 batch script
+│   ├── create_ascii_video.sh    # Full video pipeline
+│   ├── input.mp4                # Source video
+│   ├── frames/                  # PNG frames (generated)
+│   └── ascii_frames/            # ASCII text files (generated)
 └── .github/
     └── workflows/
-        └── pages.yml           # GitHub Pages deployment
+        └── pages.yml            # GitHub Pages deployment
 ```
 
 ## Workflow Summary
@@ -257,8 +259,9 @@ ffmpeg -i input.mp4 -vf "fps=10,scale=420:-1" frames/frame_%04d.png
 # 2. Generate ASCII art
 ./create_ascii_art.sh
 
-# 3. Create JSON
+# 3. Create JSON and move to public
 node create_json_ascii.js
+mv frames.json ../public/frames-70-char.json
 
 # 4. Start dev server
 cd ..
