@@ -1,1 +1,5 @@
 .DS_Store
+/website/
+frame_generation_pipeline/ascii_frames
+frame_generation_pipeline/frames
+frame_generation_pipeline/input.mp4
