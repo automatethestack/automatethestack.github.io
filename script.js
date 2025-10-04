@@ -56,6 +56,7 @@ class AnimationManager {
   let managerAbove = null;
   let managerBelow = null;
   let baseFPS = 10; // Base FPS for animation
+  const MOBILE_TARGET_ROWS = 35; // Target number of rows for rotated mobile view
 
   async function loadFrames(url) {
     const response = await fetch(url);
@@ -127,7 +128,27 @@ class AnimationManager {
         while (end >= start && isBlank(rotated[end])) end--;
         return rotated.slice(start, end + 1);
       };
-      framesBelow = framesAbove.map(rotate90Clockwise);
+      const downsampleRows = (lines, target) => {
+        if (lines.length <= target) return lines;
+        const result = [];
+        const step = (lines.length - 1) / (target - 1);
+        let prevIndex = -1;
+        for (let i = 0; i < target; i++) {
+          let idx = Math.round(i * step);
+          if (idx <= prevIndex) idx = prevIndex + 1;
+          if (idx >= lines.length) idx = lines.length - 1;
+          result.push(lines[idx]);
+          prevIndex = idx;
+        }
+        // Ensure edges are preserved exactly
+        result[0] = lines[0];
+        result[result.length - 1] = lines[lines.length - 1];
+        return result;
+      };
+      framesBelow = framesAbove.map((frameLines) => {
+        const rotated = rotate90Clockwise(frameLines);
+        return downsampleRows(rotated, MOBILE_TARGET_ROWS);
+      });
     }
     // Ensure the element is populated and visible every time we switch down
     const el = getBelowEl();

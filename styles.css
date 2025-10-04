@@ -7,7 +7,8 @@ html {
   font-size: 22px;
   line-height: 22px;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* palette + wave controls */
@@ -25,8 +26,13 @@ html {
 body {
   margin: 0;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
+
+/* Hide scrollbars while keeping scroll functional */
+html, body { -ms-overflow-style: none; scrollbar-width: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; }
 
 pre {
   display: block;
