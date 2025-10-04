@@ -45,8 +45,9 @@ class AnimationManager {
 
 // Main animation logic
 (async function initAnimation() {
-  const animationContentAbove490 = document.getElementById('animation-content-above-490');
-  const animationContentBelow490 = document.getElementById('animation-content-below-490');
+  // Lazy element getters to tolerate late DOM changes
+  const getAboveEl = () => document.getElementById('animation-content-above-490');
+  const getBelowEl = () => document.getElementById('animation-content-below-490');
 
   let framesAbove = [];
   let framesBelow = [];
@@ -69,14 +70,18 @@ class AnimationManager {
       managerAbove = new AnimationManager(() => {
         if (!framesAbove.length) return;
         currentFrameAbove = (currentFrameAbove + 1) % framesAbove.length;
-        animationContentAbove490.textContent = framesAbove[currentFrameAbove].join('\n');
+        const el = getAboveEl();
+        if (!el) return;
+        el.textContent = framesAbove[currentFrameAbove].join('\n');
       }, baseFPS);
     }
     if (!managerBelow) {
       managerBelow = new AnimationManager(() => {
         if (!framesBelow.length) return;
         currentFrameBelow = (currentFrameBelow + 1) % framesBelow.length;
-        animationContentBelow490.textContent = framesBelow[currentFrameBelow].join('\n');
+        const el = getBelowEl();
+        if (!el) return;
+        el.textContent = framesBelow[currentFrameBelow].join('\n');
       }, baseFPS);
     }
   }
@@ -86,8 +91,10 @@ class AnimationManager {
       framesAbove = await loadFrames('./public/frames-70-char.json');
     }
     // Ensure the element is populated and visible every time we switch up
-    animationContentAbove490.textContent = framesAbove[0].join('\n');
-    animationContentAbove490.classList.add('loaded');
+    const el = getAboveEl();
+    if (!el) throw new Error('Missing #animation-content-above-490 element');
+    el.textContent = framesAbove[0].join('\n');
+    el.classList.add('loaded');
     ensureManagers();
     managerBelow && managerBelow.pause();
     managerAbove.updateFPS(baseFPS);
@@ -123,8 +130,10 @@ class AnimationManager {
       framesBelow = framesAbove.map(rotate90Clockwise);
     }
     // Ensure the element is populated and visible every time we switch down
-    animationContentBelow490.textContent = framesBelow[0].join('\n');
-    animationContentBelow490.classList.add('loaded');
+    const el = getBelowEl();
+    if (!el) throw new Error('Missing #animation-content-below-490 element');
+    el.textContent = framesBelow[0].join('\n');
+    el.classList.add('loaded');
     ensureManagers();
     managerAbove && managerAbove.pause();
     managerBelow.updateFPS(baseFPS);
@@ -174,7 +183,7 @@ class AnimationManager {
         }
       } catch (err) {
         console.error('Animation initialization failed:', err);
-        const target = isBelow ? animationContentBelow490 : animationContentAbove490;
+        const target = isBelow ? getBelowEl() : getAboveEl();
         if (target) target.textContent = 'Failed to load animation. Please refresh the page.';
       }
     }
@@ -191,9 +200,8 @@ class AnimationManager {
     }
   } catch (error) {
     console.error('Animation setup failed:', error);
-    if (animationContentAbove490) {
-      animationContentAbove490.textContent = 'Failed to load animation. Please refresh the page.';
-    }
+    const above = getAboveEl();
+    if (above) above.textContent = 'Failed to load animation. Please refresh the page.';
   }
 })();
 
